@@ -33,7 +33,19 @@ namespace PersonalFinanceTracker.Api.Migrations
                 ) AS numbered
                 WHERE u."Id" = numbered."Id";
 
-                SELECT setval('user_number_seq', COALESCE((SELECT MAX("UserNumber") FROM users), 0));
+                DO $$
+                DECLARE
+                    max_user_number integer;
+                BEGIN
+                    SELECT MAX("UserNumber") INTO max_user_number FROM users;
+
+                    IF max_user_number IS NULL THEN
+                        PERFORM setval('user_number_seq', 1, false);
+                    ELSE
+                        PERFORM setval('user_number_seq', max_user_number, true);
+                    END IF;
+                END
+                $$;
 
                 ALTER TABLE users ALTER COLUMN "UserNumber" SET DEFAULT nextval('user_number_seq');
                 ALTER TABLE users ALTER COLUMN "UserNumber" SET NOT NULL;
@@ -50,7 +62,19 @@ namespace PersonalFinanceTracker.Api.Migrations
                 ) AS numbered
                 WHERE t."Id" = numbered."Id";
 
-                SELECT setval('transaction_number_seq', COALESCE((SELECT MAX("TransactionNumber") FROM transactions), 0));
+                DO $$
+                DECLARE
+                    max_transaction_number bigint;
+                BEGIN
+                    SELECT MAX("TransactionNumber") INTO max_transaction_number FROM transactions;
+
+                    IF max_transaction_number IS NULL THEN
+                        PERFORM setval('transaction_number_seq', 1, false);
+                    ELSE
+                        PERFORM setval('transaction_number_seq', max_transaction_number, true);
+                    END IF;
+                END
+                $$;
 
                 ALTER TABLE transactions ALTER COLUMN "TransactionNumber" SET DEFAULT nextval('transaction_number_seq');
                 ALTER TABLE transactions ALTER COLUMN "TransactionNumber" SET NOT NULL;

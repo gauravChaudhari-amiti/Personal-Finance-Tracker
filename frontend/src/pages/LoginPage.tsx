@@ -25,6 +25,24 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
+    const normalizedDisplayName = displayName.trim();
+    const normalizedEmail = email.trim();
+
+    if (mode === "register" && !normalizedDisplayName) {
+      setError("Display name is required.");
+      return;
+    }
+
+    if (!normalizedEmail) {
+      setError("Email is required.");
+      return;
+    }
+
+    if (!password) {
+      setError("Password is required.");
+      return;
+    }
+
     try {
       if (mode === "register" && password !== confirmPassword) {
         setError("Passwords do not match.");
@@ -35,8 +53,12 @@ export default function LoginPage() {
 
       const data =
         mode === "login"
-          ? await authService.login({ email, password })
-          : await authService.register({ displayName, email, password });
+          ? await authService.login({ email: normalizedEmail, password })
+          : await authService.register({
+              displayName: normalizedDisplayName,
+              email: normalizedEmail,
+              password
+            });
 
       setUser(data);
       navigate("/dashboard");
@@ -105,6 +127,7 @@ export default function LoginPage() {
                 placeholder="Enter your name"
                 autoComplete="name"
                 data-testid="auth-display-name"
+                required
               />
             </div>
           )}
@@ -119,6 +142,7 @@ export default function LoginPage() {
               placeholder="Enter email"
               autoComplete="email"
               data-testid="auth-email"
+              required
             />
           </div>
 
@@ -132,6 +156,7 @@ export default function LoginPage() {
               placeholder="Enter password"
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               data-testid="auth-password"
+              required
             />
           </div>
 
@@ -146,6 +171,7 @@ export default function LoginPage() {
                 placeholder="Confirm password"
                 autoComplete="new-password"
                 data-testid="auth-confirm-password"
+                required
               />
             </div>
           )}

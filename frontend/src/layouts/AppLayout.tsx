@@ -21,7 +21,7 @@ const navigationItems = [
 
 export default function AppLayout() {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, isReturningUser, logout } = useAuthStore();
 
   const handleLogout = () => {
     logout();
@@ -125,7 +125,9 @@ export default function AppLayout() {
         <div className="topbar">
           <div className="topbar-summary">
             <div className="topbar-kicker">Personal workspace</div>
-            <div className="topbar-heading">Welcome back, {user?.displayName}</div>
+            <div className="topbar-heading">
+              {isReturningUser ? "Welcome back" : "Welcome"}, {user?.displayName}
+            </div>
             <div className="topbar-meta">
               Your full finance view is ready for planning, tracking, and review.
             </div>

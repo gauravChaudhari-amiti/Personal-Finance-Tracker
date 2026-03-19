@@ -11,6 +11,9 @@ import { hasVisibleCategoryName, sanitizeCategoryName } from "../utils/categoryN
 const today = new Date();
 const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
 const todayIso = today.toISOString().slice(0, 10);
+const isCreditCardAccount = (accountType: string) => accountType.toLowerCase() === "credit card";
+const formatReportAmount = (amount: number, accountType?: string) =>
+  `${accountType && isCreditCardAccount(accountType) && amount > 0 ? "-" : ""}Rs ${amount.toLocaleString()}`;
 
 export default function ReportsPage() {
   const [report, setReport] = useState<ReportResponse | null>(null);
@@ -225,7 +228,7 @@ export default function ReportsPage() {
                 <div>
                   <strong>{formatAccountDisplayName(account.accountName, account.accountType)}</strong>
                 </div>
-                <div className="meta-text">Rs {account.currentBalance.toLocaleString()}</div>
+                <div className="meta-text">{formatReportAmount(account.currentBalance, account.accountType)}</div>
               </div>
             ))}
             {report.accountPositions.length === 0 && <div className="meta-text">No account data for this filter.</div>}

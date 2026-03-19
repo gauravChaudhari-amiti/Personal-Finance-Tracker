@@ -11,6 +11,12 @@ import { hasVisibleCategoryName, sanitizeCategoryName } from "../utils/categoryN
 const frequencies = ["daily", "weekly", "monthly", "yearly"] as const;
 const wholeMonthCategoryName = "Whole Month";
 
+const formatLabel = (value: string) =>
+  value
+    .split("-")
+    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : part))
+    .join(" ");
+
 export default function RecurringPage() {
   const [items, setItems] = useState<RecurringTransaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -239,7 +245,7 @@ export default function RecurringPage() {
               <select value={frequency} onChange={(e) => setFrequency(e.target.value as (typeof frequencies)[number])}>
                 {frequencies.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {formatLabel(item)}
                   </option>
                 ))}
               </select>
@@ -339,7 +345,7 @@ export default function RecurringPage() {
                 <div>
                   <strong>{item.title}</strong>
                   <div className="meta-text">
-                    {item.frequency} | {item.type} | {item.categoryName}
+                    {formatLabel(item.frequency)} | {formatLabel(item.type)} | {item.categoryName}
                   </div>
                   <div className="meta-text">
                     {formatAccountDisplayName(item.accountName, accounts.find((account) => account.id === item.accountId)?.type)}

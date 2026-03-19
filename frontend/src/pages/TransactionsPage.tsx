@@ -13,6 +13,11 @@ import { formatAccountDisplayName } from "../utils/accountDisplay";
 import { hasVisibleCategoryName, sanitizeCategoryName } from "../utils/categoryName";
 
 const wholeMonthCategoryName = "Whole Month";
+const getTodayInputValue = () => {
+  const now = new Date();
+  const timezoneOffset = now.getTimezoneOffset() * 60 * 1000;
+  return new Date(now.getTime() - timezoneOffset).toISOString().slice(0, 10);
+};
 
 const transferTypeLabels: Record<string, string> = {
   "transfer-in": "Transfer In",
@@ -90,7 +95,7 @@ export default function TransactionsPage() {
   const [type, setType] = useState("expense");
   const [categoryId, setCategoryId] = useState("");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState("2026-03-16");
+  const [date, setDate] = useState(getTodayInputValue);
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -213,9 +218,6 @@ export default function TransactionsPage() {
     setAccounts(accountData);
     setGoals(goalData);
 
-    if (accountData.length > 0 && !accountId) {
-      setAccountId(`account:${accountData[0].id}`);
-    }
   };
 
   const loadTransactions = async (pageNumber = page) => {
@@ -281,8 +283,8 @@ export default function TransactionsPage() {
       return;
     }
 
-    if (!selectableAccounts.some((source) => source.value === accountId)) {
-      setAccountId(selectableAccounts[0].value);
+    if (accountId && !selectableAccounts.some((source) => source.value === accountId)) {
+      setAccountId("");
     }
   }, [selectableAccounts, accountId]);
 
@@ -290,8 +292,9 @@ export default function TransactionsPage() {
     setEditingId(null);
     setType("expense");
     setCategoryId("");
+    setAccountId("");
     setAmount("");
-    setDate("2026-03-16");
+    setDate(getTodayInputValue());
     setMerchant("");
     setNote("");
     setPaymentMethod("");
