@@ -6,7 +6,14 @@ type Props = {
 };
 
 export default function ProtectedRoute({ children }: Props) {
-  const user = useAuthStore((state) => state.user);
+  const { user, isAuthResolved } = useAuthStore((state) => ({
+    user: state.user,
+    isAuthResolved: state.isAuthResolved
+  }));
+
+  if (!isAuthResolved) {
+    return <div>Loading session...</div>;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;

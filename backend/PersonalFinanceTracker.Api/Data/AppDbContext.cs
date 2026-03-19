@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<UserActionToken> UserActionTokens => Set<UserActionToken>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Budget> Budgets => Set<Budget>();
     public DbSet<Category> Categories => Set<Category>();
@@ -30,9 +31,27 @@ public class AppDbContext : DbContext
             entity.Property(x => x.Email).HasMaxLength(255).IsRequired();
             entity.Property(x => x.PasswordHash).IsRequired();
             entity.Property(x => x.DisplayName).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.AuthProvider).HasMaxLength(20).IsRequired();
             entity.Property(x => x.Role).HasMaxLength(30).IsRequired();
             entity.HasIndex(x => x.Email).IsUnique();
             entity.HasIndex(x => x.UserNumber).IsUnique();
+        });
+
+        modelBuilder.Entity<UserActionToken>(entity =>
+        {
+            entity.ToTable("user_action_tokens");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasMaxLength(64);
+            entity.Property(x => x.UserId).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Type).HasMaxLength(40).IsRequired();
+            entity.Property(x => x.TokenHash).HasMaxLength(128).IsRequired();
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => new { x.UserId, x.Type });
+
+            entity.HasOne(x => x.User)
+                .WithMany(x => x.AuthTokens)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Account>(entity =>

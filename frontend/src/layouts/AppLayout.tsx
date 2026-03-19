@@ -23,8 +23,8 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { user, isReturningUser, logout } = useAuthStore();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -35,11 +35,11 @@ export default function AppLayout() {
       recordSessionActivity();
     };
 
-    const handleSessionExpiry = () => {
+    const handleSessionExpiry = async () => {
       if (!hasSessionExpired()) return;
 
       setSessionExpiredNotice();
-      logout();
+      await logout();
       navigate("/login", { replace: true });
     };
 
@@ -67,11 +67,11 @@ export default function AppLayout() {
     });
 
     const visibilityHandler = () => {
-      if (document.visibilityState === "visible") {
-        if (hasSessionExpired()) {
-          handleSessionExpiry();
-          return;
-        }
+        if (document.visibilityState === "visible") {
+          if (hasSessionExpired()) {
+            void handleSessionExpiry();
+            return;
+          }
 
         markActivity();
       }
@@ -80,7 +80,9 @@ export default function AppLayout() {
     document.addEventListener("visibilitychange", visibilityHandler);
     recordSessionActivity();
 
-    const intervalId = window.setInterval(handleSessionExpiry, 60000);
+    const intervalId = window.setInterval(() => {
+      void handleSessionExpiry();
+    }, 60000);
 
     return () => {
       eventHandlers.forEach(({ eventName, handler }) => {

@@ -9,8 +9,34 @@ export type RegisterRequest = {
   password: string;
 };
 
-export type LoginResponse = {
+export type AuthActionResponse = {
+  message: string;
+  previewUrl?: string;
+};
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ResetPasswordRequest = {
   token: string;
+  password: string;
+};
+
+export type EmailTokenRequest = {
+  token: string;
+};
+
+export type GoogleLoginRequest = {
+  credential: string;
+};
+
+export type GoogleAuthConfigResponse = {
+  clientId?: string;
+  enabled: boolean;
+};
+
+export type LoginResponse = {
   userNumber: number;
   email: string;
   displayName: string;
@@ -18,7 +44,6 @@ export type LoginResponse = {
 };
 
 export type AuthUser = {
-  token: string;
   userNumber: number;
   email: string;
   displayName: string;

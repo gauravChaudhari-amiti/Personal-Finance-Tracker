@@ -78,6 +78,11 @@ namespace PersonalFinanceTracker.Api.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("AuthProvider")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -90,6 +95,12 @@ namespace PersonalFinanceTracker.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("EmailVerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -425,6 +436,46 @@ namespace PersonalFinanceTracker.Api.Migrations
                     b.ToTable("transactions", (string)null);
                 });
 
+            modelBuilder.Entity("PersonalFinanceTracker.Api.Entities.UserActionToken", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "Type");
+
+                    b.ToTable("user_action_tokens", (string)null);
+                });
+
             modelBuilder.Entity("PersonalFinanceTracker.Api.Entities.Account", b =>
                 {
                     b.HasOne("PersonalFinanceTracker.Api.Entities.Category", "Category")
@@ -557,6 +608,17 @@ namespace PersonalFinanceTracker.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PersonalFinanceTracker.Api.Entities.UserActionToken", b =>
+                {
+                    b.HasOne("PersonalFinanceTracker.Api.Entities.AppUser", "User")
+                        .WithMany("AuthTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("PersonalFinanceTracker.Api.Entities.Account", b =>
                 {
                     b.Navigation("LinkedGoals");
@@ -569,6 +631,8 @@ namespace PersonalFinanceTracker.Api.Migrations
             modelBuilder.Entity("PersonalFinanceTracker.Api.Entities.AppUser", b =>
                 {
                     b.Navigation("Accounts");
+
+                    b.Navigation("AuthTokens");
 
                     b.Navigation("Budgets");
 

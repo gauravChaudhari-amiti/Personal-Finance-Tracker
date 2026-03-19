@@ -5,7 +5,7 @@ import "./index.css";
 import { useAuthStore } from "./store/authStore";
 import { useThemeStore } from "./store/themeStore";
 
-useAuthStore.getState().loadUser();
+void useAuthStore.getState().loadUser();
 useThemeStore.getState().loadTheme();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

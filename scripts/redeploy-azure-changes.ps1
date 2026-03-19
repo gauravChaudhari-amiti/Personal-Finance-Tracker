@@ -7,7 +7,15 @@ param(
     [string]$BackendAppName = "pft-api",
     [string]$FrontendAppName = "pft-web",
     [string]$Tag = "",
-    [string]$BackendApiBaseUrl = ""
+    [string]$BackendApiBaseUrl = "",
+    [string]$GoogleClientId = "",
+    [string]$EmailSmtpHost = "",
+    [string]$EmailSmtpPort = "587",
+    [string]$EmailSmtpUsername = "",
+    [string]$EmailSmtpPassword = "",
+    [string]$EmailFromEmail = "",
+    [string]$EmailFromName = "Personal Finance Tracker",
+    [string]$EmailUseSsl = "true"
 )
 
 $ErrorActionPreference = "Stop"
@@ -95,11 +103,17 @@ if ($Target -in @("frontend", "both")) {
 
     Write-Host "==> Building frontend image $frontendImage"
     Write-Host "==> Using backend API $BackendApiBaseUrl"
-    podman build `
-        --file "$repoRoot\frontend\Containerfile" `
-        --build-arg "VITE_API_BASE_URL=$BackendApiBaseUrl" `
-        --tag $frontendImage `
-        $repoRoot
+    $frontendBuildArgs = @(
+        "--file", "$repoRoot\frontend\Containerfile",
+        "--build-arg", "VITE_API_BASE_URL=$BackendApiBaseUrl"
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($GoogleClientId)) {
+        $frontendBuildArgs += @("--build-arg", "VITE_GOOGLE_CLIENT_ID=$GoogleClientId")
+    }
+
+    $frontendBuildArgs += @("--tag", $frontendImage, $repoRoot)
+    podman build @frontendBuildArgs
 
     Write-Host "==> Pushing frontend image"
     podman push $frontendImage
@@ -122,6 +136,67 @@ $finalFrontendFqdn = az containerapp show `
     --resource-group $ResourceGroup `
     --query properties.configuration.ingress.fqdn `
     -o tsv
+
+$backendConfigUpdates = @()
+
+if (-not [string]::IsNullOrWhiteSpace($finalFrontendFqdn)) {
+    $backendConfigUpdates += "Frontend__BaseUrl=https://$finalFrontendFqdn"
+}
+
+if (-not [string]::IsNullOrWhiteSpace($GoogleClientId)) {
+    $backendConfigUpdates += "GoogleAuth__ClientId=$GoogleClientId"
+}
+
+if (-not [string]::IsNullOrWhiteSpace($EmailSmtpHost) -and -not [string]::IsNullOrWhiteSpace($EmailFromEmail)) {
+    $backendConfigUpdates += @(
+        "Email__SmtpHost=$EmailSmtpHost",
+        "Email__SmtpPort=$EmailSmtpPort",
+        "Email__FromEmail=$EmailFromEmail",
+        "Email__FromName=$EmailFromName",
+        "Email__UseSsl=$EmailUseSsl"
+    )
+}
+
+if ($backendConfigUpdates.Count -gt 0) {
+    Write-Host "==> Updating backend app settings"
+    az containerapp update `
+        --name $BackendAppName `
+        --resource-group $ResourceGroup `
+        --set-env-vars $backendConfigUpdates | Out-Null
+}
+
+if (-not [string]::IsNullOrWhiteSpace($EmailSmtpUsername) -or -not [string]::IsNullOrWhiteSpace($EmailSmtpPassword)) {
+    $backendSecretUpdates = @()
+
+    if (-not [string]::IsNullOrWhiteSpace($EmailSmtpUsername)) {
+        $backendSecretUpdates += "smtpuser=$EmailSmtpUsername"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($EmailSmtpPassword)) {
+        $backendSecretUpdates += "smtppassword=$EmailSmtpPassword"
+    }
+
+    Write-Host "==> Updating backend email secrets"
+    az containerapp secret set `
+        --name $BackendAppName `
+        --resource-group $ResourceGroup `
+        --secrets $backendSecretUpdates | Out-Null
+
+    $backendSecretEnvUpdates = @()
+
+    if (-not [string]::IsNullOrWhiteSpace($EmailSmtpUsername)) {
+        $backendSecretEnvUpdates += "Email__SmtpUsername=secretref:smtpuser"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($EmailSmtpPassword)) {
+        $backendSecretEnvUpdates += "Email__SmtpPassword=secretref:smtppassword"
+    }
+
+    az containerapp update `
+        --name $BackendAppName `
+        --resource-group $ResourceGroup `
+        --set-env-vars $backendSecretEnvUpdates | Out-Null
+}
 
 Write-Host ""
 Write-Host "Redeploy complete."

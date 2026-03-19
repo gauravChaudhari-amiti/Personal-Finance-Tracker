@@ -1,29 +1,82 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 import { authService } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
-import ThemeToggle from "../components/ThemeToggle";
 import { consumeSessionNotice } from "../utils/sessionTimeout";
+
+type AuthMode = "login" | "register" | "forgot";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user, isAuthResolved } = useAuthStore((state) => ({
+    user: state.user,
+    isAuthResolved: state.isAuthResolved
+  }));
   const setUser = useAuthStore((state) => state.setUser);
 
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const requestedMode = useMemo<AuthMode>(() => {
+    const modeParam = searchParams.get("mode");
+    return modeParam === "register" || modeParam === "forgot" ? modeParam : "login";
+  }, [searchParams]);
+
+  const [mode, setMode] = useState<AuthMode>(requestedMode);
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(consumeSessionNotice());
+  const [notice, setNotice] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>();
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const displayNameId = "auth-display-name";
   const emailId = "auth-email";
   const passwordId = "auth-password";
   const confirmPasswordId = "auth-confirm-password";
 
+  const clearMessages = () => {
+    setError("");
+    setNotice("");
+    setPreviewUrl(undefined);
+  };
+
+  useEffect(() => {
+    setMode(requestedMode);
+  }, [requestedMode]);
+
+  const switchMode = (nextMode: AuthMode) => {
+    setMode(nextMode);
+    setSearchParams(nextMode === "login" ? {} : { mode: nextMode });
+    clearMessages();
+    setPassword("");
+    setConfirmPassword("");
+  };
+
+  const handleResendVerification = async () => {
+    const normalizedEmail = pendingVerificationEmail || email.trim();
+    if (!normalizedEmail) {
+      setError("Enter your email first so we know where to resend the verification link.");
+      return;
+    }
+
+    try {
+      clearMessages();
+      setLoading(true);
+      const result = await authService.resendVerification({ email: normalizedEmail });
+      setNotice(result.message);
+      setPreviewUrl(result.previewUrl);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to resend verification email.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    clearMessages();
 
     const normalizedDisplayName = displayName.trim();
     const normalizedEmail = email.trim();
@@ -38,7 +91,7 @@ export default function LoginPage() {
       return;
     }
 
-    if (!password) {
+    if (mode !== "forgot" && !password) {
       setError("Password is required.");
       return;
     }
@@ -51,33 +104,59 @@ export default function LoginPage() {
 
       setLoading(true);
 
-      const data =
-        mode === "login"
-          ? await authService.login({ email: normalizedEmail, password })
-          : await authService.register({
-              displayName: normalizedDisplayName,
-              email: normalizedEmail,
-              password
-            });
+      if (mode === "login") {
+        const data = await authService.login({ email: normalizedEmail, password });
+        setUser(data);
+        navigate("/dashboard");
+        return;
+      }
 
-      setUser(data);
-      navigate("/dashboard");
+      if (mode === "register") {
+        const result = await authService.register({
+          displayName: normalizedDisplayName,
+          email: normalizedEmail,
+          password
+        });
+
+        setPendingVerificationEmail(normalizedEmail);
+        setNotice(result.message);
+        setPreviewUrl(result.previewUrl);
+        setDisplayName("");
+        setEmail(normalizedEmail);
+        setPassword("");
+        setConfirmPassword("");
+        return;
+      }
+
+      const result = await authService.forgotPassword({ email: normalizedEmail });
+      setNotice(result.message);
+      setPreviewUrl(result.previewUrl);
     } catch (err: any) {
+      const backendMessage = err?.response?.data?.message;
+      if (mode === "login" && backendMessage === "Verify your email before logging in.") {
+        setPendingVerificationEmail(normalizedEmail);
+      }
+
       setError(
-        err?.response?.data?.message ||
-          (mode === "login" ? "Login failed." : "Account creation failed.")
+        backendMessage ||
+          (mode === "login"
+            ? "Login failed."
+            : mode === "register"
+              ? "Account creation failed."
+              : "Password reset request failed.")
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const switchMode = (nextMode: "login" | "register") => {
-    setMode(nextMode);
-    setError("");
-    setPassword("");
-    setConfirmPassword("");
-  };
+  if (!isAuthResolved) {
+    return <div className="auth-page">Loading session...</div>;
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="auth-page">
@@ -100,19 +179,35 @@ export default function LoginPage() {
             className={`auth-switch-btn ${mode === "register" ? "active" : ""}`}
             onClick={() => switchMode("register")}
           >
-            Create Account
+            Sign Up
           </button>
         </div>
 
         <p>
           {mode === "login"
             ? "Log in to your account to continue."
-            : "Create your account to start tracking your finances."}
+            : mode === "register"
+              ? "Create your account, then verify your email before logging in."
+              : "Enter your email and we will send you a password reset link."}
         </p>
 
         {error && (
           <div className="error-text" role="alert" aria-live="polite" data-testid="auth-error">
             {error}
+          </div>
+        )}
+
+        {notice && (
+          <div className="notice-banner success" role="status" aria-live="polite">
+            {notice}
+            {previewUrl && (
+              <div className="auth-preview-link">
+                Preview link:{" "}
+                <a href={previewUrl} target="_blank" rel="noreferrer">
+                  Open link
+                </a>
+              </div>
+            )}
           </div>
         )}
 
@@ -146,19 +241,21 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor={passwordId}>Password</label>
-            <input
-              id={passwordId}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
-              data-testid="auth-password"
-              required
-            />
-          </div>
+          {mode !== "forgot" && (
+            <div className="form-group">
+              <label htmlFor={passwordId}>Password</label>
+              <input
+                id={passwordId}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                data-testid="auth-password"
+                required
+              />
+            </div>
+          )}
 
           {mode === "register" && (
             <div className="form-group">
@@ -180,12 +277,59 @@ export default function LoginPage() {
             {loading
               ? mode === "login"
                 ? "Logging in..."
-                : "Creating account..."
+                : mode === "register"
+                  ? "Creating account..."
+                  : "Sending reset link..."
               : mode === "login"
                 ? "Log In"
-                : "Create Account"}
+                : mode === "register"
+                  ? "Create Account"
+                  : "Send Reset Link"}
           </button>
         </form>
+
+        {mode === "login" && (
+          <>
+            <div className="auth-link-row">
+              <button type="button" className="auth-link-btn" onClick={() => switchMode("forgot")}>
+                Forgot password?
+              </button>
+              <button type="button" className="auth-link-btn" onClick={() => switchMode("register")}>
+                Don&apos;t have an account? Sign up
+              </button>
+            </div>
+            {pendingVerificationEmail && (
+              <div className="auth-link-row single">
+                <button type="button" className="auth-link-btn" onClick={handleResendVerification}>
+                  Resend email verification link
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {mode === "register" && (
+          <>
+            <div className="auth-link-row single">
+              <button type="button" className="auth-link-btn" onClick={handleResendVerification}>
+                Resend email verification link
+              </button>
+            </div>
+            <div className="auth-link-row single">
+              <button type="button" className="auth-link-btn" onClick={() => switchMode("login")}>
+                Already have an account? Log in
+              </button>
+            </div>
+          </>
+        )}
+
+        {mode === "forgot" && (
+          <div className="auth-link-row single">
+            <button type="button" className="auth-link-btn" onClick={() => switchMode("login")}>
+              Back to log in
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

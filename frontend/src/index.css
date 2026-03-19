@@ -122,6 +122,11 @@ textarea {
   margin-bottom: 20px;
 }
 
+.auth-note {
+  margin-top: 16px;
+  color: var(--text-muted);
+}
+
 .auth-switch {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -188,6 +193,13 @@ textarea {
   cursor: not-allowed;
 }
 
+.auth-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .secondary-btn {
   width: 100%;
   background: var(--surface-strong);
@@ -225,6 +237,76 @@ textarea {
   color: var(--danger);
   font-size: 14px;
   margin-bottom: 12px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.google-signin-button {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.google-signin-fallback {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.google-signin-placeholder {
+  margin-top: 0;
+}
+
+.auth-link-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.auth-link-row.single {
+  justify-content: center;
+}
+
+.auth-link-btn,
+.auth-link-anchor {
+  border: none;
+  background: transparent;
+  color: var(--accent-strong);
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.auth-link-btn:hover,
+.auth-link-anchor:hover {
+  text-decoration: underline;
+}
+
+.auth-preview-link {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.auth-preview-link a {
+  color: inherit;
 }
 
 .error-banner {
@@ -813,6 +895,10 @@ textarea {
   margin-top: 6px;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.auth-inline-helper {
+  text-align: center;
 }
 
 .amount-income {

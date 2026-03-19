@@ -33,6 +33,9 @@ public class DatabaseSeeder : IDatabaseSeeder
                     Email = "user@demo.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("User@123"),
                     DisplayName = "Demo User",
+                    AuthProvider = "password",
+                    IsEmailVerified = true,
+                    EmailVerifiedAt = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
                     Role = "User",
                     CreatedAt = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc)
                 },
@@ -42,6 +45,9 @@ public class DatabaseSeeder : IDatabaseSeeder
                     Email = "admin@demo.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
                     DisplayName = "Demo Admin",
+                    AuthProvider = "password",
+                    IsEmailVerified = true,
+                    EmailVerifiedAt = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
                     Role = "Admin",
                     CreatedAt = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc)
                 }

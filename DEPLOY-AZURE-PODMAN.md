@@ -84,6 +84,8 @@ Use your own strong values for:
 
 - PostgreSQL admin password
 - JWT key
+- Google client ID if you want Google sign-in on the login page
+- SMTP settings if you want verification and reset emails to reach real inboxes
 
 ## One-shot deployment script
 
@@ -101,7 +103,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-azure-container-apps.p
   -PostgresDatabaseName "personal_finance_db" ^
   -PostgresAdminUser "pftadmin" ^
   -PostgresAdminPassword "REPLACE_WITH_STRONG_PASSWORD" ^
-  -JwtKey "REPLACE_WITH_LONG_RANDOM_JWT_KEY"
+  -JwtKey "REPLACE_WITH_LONG_RANDOM_JWT_KEY" ^
+  -GoogleClientId "YOUR_GOOGLE_CLIENT_ID" ^
+  -EmailSmtpHost "smtp.example.com" ^
+  -EmailSmtpPort "587" ^
+  -EmailSmtpUsername "user@example.com" ^
+  -EmailSmtpPassword "APP_PASSWORD" ^
+  -EmailFromEmail "user@example.com"
 ```
 
 From PowerShell:
@@ -118,7 +126,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-azure-container-apps.p
   -PostgresDatabaseName "personal_finance_db" `
   -PostgresAdminUser "pftadmin" `
   -PostgresAdminPassword "REPLACE_WITH_STRONG_PASSWORD" `
-  -JwtKey "REPLACE_WITH_LONG_RANDOM_JWT_KEY"
+  -JwtKey "REPLACE_WITH_LONG_RANDOM_JWT_KEY" `
+  -GoogleClientId "YOUR_GOOGLE_CLIENT_ID" `
+  -EmailSmtpHost "smtp.example.com" `
+  -EmailSmtpPort "587" `
+  -EmailSmtpUsername "user@example.com" `
+  -EmailSmtpPassword "APP_PASSWORD" `
+  -EmailFromEmail "user@example.com"
 ```
 
 ## What the script does
@@ -134,7 +148,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-azure-container-apps.p
 - deploys the backend container app
 - builds and pushes frontend image with the backend API URL
 - deploys the frontend container app
-- updates backend CORS to allow the frontend origin
+- updates backend CORS, frontend base URL, optional Google auth client ID, and optional SMTP email settings
 
 ## Important post-deployment database access step
 
@@ -259,7 +273,7 @@ The frontend must be rebuilt whenever the backend API URL changes, because `VITE
 Example frontend rebuild:
 
 ```cmd
-podman build -f .\frontend\Containerfile --build-arg VITE_API_BASE_URL="https://pft-api.agreeablewave-6fe11347.centralindia.azurecontainerapps.io/api" -t pftacrgauravchaudhari01.azurecr.io/pft-web:4 .
+podman build -f .\frontend\Containerfile --build-arg VITE_API_BASE_URL="https://pft-api.agreeablewave-6fe11347.centralindia.azurecontainerapps.io/api" --build-arg VITE_GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID" -t pftacrgauravchaudhari01.azurecr.io/pft-web:4 .
 podman push pftacrgauravchaudhari01.azurecr.io/pft-web:4
 az containerapp update ^
   -n pft-web ^
@@ -299,10 +313,19 @@ Frontend only:
 scripts\redeploy.cmd frontend
 ```
 
+Frontend or both with Google sign-in enabled:
+
+```cmd
+scripts\redeploy.cmd both -GoogleClientId "YOUR_GOOGLE_CLIENT_ID"
+scripts\redeploy.cmd both -EmailSmtpHost "smtp.example.com" -EmailSmtpPort "587" -EmailSmtpUsername "user@example.com" -EmailSmtpPassword "APP_PASSWORD" -EmailFromEmail "user@example.com"
+```
+
 If you prefer PowerShell directly:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\redeploy-azure-changes.ps1 -Target both
+powershell -ExecutionPolicy Bypass -File .\scripts\redeploy-azure-changes.ps1 -Target both -GoogleClientId "YOUR_GOOGLE_CLIENT_ID"
+powershell -ExecutionPolicy Bypass -File .\scripts\redeploy-azure-changes.ps1 -Target both -EmailSmtpHost "smtp.example.com" -EmailSmtpPort "587" -EmailSmtpUsername "user@example.com" -EmailSmtpPassword "APP_PASSWORD" -EmailFromEmail "user@example.com"
 ```
 
 What it does:
@@ -324,6 +347,21 @@ Defaults are already set for this project:
 For frontend redeploys, it automatically reads the current backend FQDN and builds with:
 
 - `VITE_API_BASE_URL=https://<backend-fqdn>/api`
+
+If `-GoogleClientId` is passed, it also:
+
+- builds the frontend with `VITE_GOOGLE_CLIENT_ID`
+- updates backend `GoogleAuth__ClientId`
+- updates backend `Frontend__BaseUrl`
+
+If SMTP settings are passed, it also:
+
+- updates backend `Email__SmtpHost`
+- updates backend `Email__SmtpPort`
+- updates backend `Email__FromEmail`
+- updates backend `Email__FromName`
+- updates backend `Email__UseSsl`
+- stores SMTP username/password as Container App secrets
 
 ## Current live URLs from the successful deployment
 
@@ -361,6 +399,11 @@ Rebuild the frontend image with the correct backend URL:
 
 - `--build-arg VITE_API_BASE_URL="https://<backend-fqdn>/api"`
 
+If the Google button is missing:
+
+- rebuild with `--build-arg VITE_GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"`
+- or use `scripts\redeploy.cmd both -GoogleClientId "YOUR_GOOGLE_CLIENT_ID"`
+
 ### Backend starts locally but fails in Azure
 
 Check:
@@ -374,3 +417,4 @@ Check:
 - The backend runs EF migrations on startup.
 - The backend also seeds initial data on startup.
 - DataProtection key warnings inside the backend container are expected for now and do not block app startup.
+- `Resend email verification link` is only for email/password sign-up accounts. It is not needed for Google sign-in accounts.
