@@ -1,0 +1,7 @@
+C:\Users\gpcha\amiti\Personal Finance Tracker\backend\PersonalFinanceTracker.Api\obj\verify\Debug\net8.0\PersonalFinanceTracker.Api.csproj.AssemblyReference.cache
+C:\Users\gpcha\amiti\Personal Finance Tracker\backend\PersonalFinanceTracker.Api\obj\verify\Debug\net8.0\PersonalFinanceTracker.Api.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\gpcha\amiti\Personal Finance Tracker\backend\PersonalFinanceTracker.Api\obj\verify\Debug\net8.0\PersonalFinanceTracker.Api.AssemblyInfoInputs.cache
+C:\Users\gpcha\amiti\Personal Finance Tracker\backend\PersonalFinanceTracker.Api\obj\verify\Debug\net8.0\PersonalFinanceTracker.Api.AssemblyInfo.cs
+C:\Users\gpcha\amiti\Personal Finance Tracker\backend\PersonalFinanceTracker.Api\obj\verify\Debug\net8.0\PersonalFinanceTracker.Api.csproj.CoreCompileInputs.cache
+C:\Users\gpcha\amiti\Personal Finance Tracker\backend\PersonalFinanceTracker.Api\obj\verify\Debug\net8.0\PersonalFinanceTracker.Api.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\gpcha\amiti\Personal Finance Tracker\backend\PersonalFinanceTracker.Api\obj\verify\Debug\net8.0\PersonalFinanceTracker.Api.MvcApplicationPartsAssemblyInfo.cache

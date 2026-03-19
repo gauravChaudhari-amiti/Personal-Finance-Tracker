@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "oMYYtO3tc3z1iJirwy5lrk3HAPQ2dcN+vBV/njl+Vmw=",
+  "Source": "PersonalFinanceTracker.Api",
+  "BasePath": "_content/PersonalFinanceTracker.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
