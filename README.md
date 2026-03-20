@@ -45,6 +45,11 @@ Azure + Podman deployment details, exact commands, troubleshooting notes, and re
 
 - `DEPLOY-AZURE-PODMAN.md`
 
+Live app:
+
+- The app is currently deployed at `https://pft-web.agreeablewave-6fe11347.centralindia.azurecontainerapps.io`
+- Use this link when you want to quickly open the latest Azure-hosted version of the app without running it locally
+
 Quick redeploy commands from the repo root in `cmd`:
 
 ```cmd
