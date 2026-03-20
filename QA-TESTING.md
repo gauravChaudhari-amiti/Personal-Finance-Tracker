@@ -1,7 +1,6 @@
 # QA Testing
 
 Use the automated smoke runner when you want a thorough pass across the core finance flows.
-Use the Playwright suite when you want real browser-flow coverage on top of the API smoke checks.
 
 ## Command
 
@@ -9,12 +8,6 @@ From the project root:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run-qa-smoke.ps1
-```
-
-From `frontend` for browser E2E:
-
-```powershell
-npm run test:e2e
 ```
 
 ## What it covers
@@ -33,22 +26,6 @@ npm run test:e2e
 - dashboard: live totals and upcoming bills
 - reports: summary and CSV export
 - final balance assertions for key accounts
-
-## Playwright coverage
-
-The browser suite covers:
-
-- register and login
-- theme toggle persistence
-- inactivity/session-expiry redirect behavior
-- category creation
-- account creation and delete
-- budgets via the UI
-- transaction create, edit, filter, and fund selection
-- credit-card settlement flow
-- goal create, contribute, and withdraw
-- recurring create and dashboard urgency styling
-- reports page filter and CSV export
 
 ## Useful switches
 

@@ -37,13 +37,6 @@ API smoke run from repo root:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\run-qa-smoke.ps1
 ```
-
-Browser E2E from `frontend`:
-
-```powershell
-npm run test:e2e
-```
-
 More detail is in `QA-TESTING.md`.
 
 ## Deployment
